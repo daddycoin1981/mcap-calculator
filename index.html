@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Memecoin PNL Calculator</title>
+  <title>📈 Memecoin PNL Calculator</title>
   <style>
     body {
       background-color: #0b0f19;
@@ -11,6 +11,14 @@
       color: #ffffff;
       text-align: center;
       padding: 30px;
+    }
+    #ticker {
+      background: #1a1a1a;
+      color: #00ffa3;
+      padding: 10px;
+      font-size: 1em;
+      margin-bottom: 20px;
+      box-shadow: inset 0 0 10px #00ffa3;
     }
     input, button {
       margin: 8px;
@@ -32,13 +40,47 @@
       padding: 10px;
       border: 1px solid #444;
     }
-    .loss-row { background-color: #4a1d1d; }
-    .footer { margin-top: 20px; font-size: 0.9em; color: #aaa; }
-    .edit-btn { background: #ffaa00; color: black; padding: 5px 10px; margin: 2px; border-radius: 4px; }
-    .delete-btn { background: #ff4d4f; color: white; padding: 5px 10px; margin: 2px; border-radius: 4px; }
+    th {
+      background-color: #1f2a40;
+      color: #00ffa3;
+    }
+    .loss-row {
+      background-color: #4a1d1d;
+    }
+    .footer {
+      margin-top: 20px;
+      font-size: 0.9em;
+      color: #aaa;
+    }
+    .edit-btn {
+      background: #ffaa00;
+      color: black;
+      padding: 5px 10px;
+      margin: 2px;
+      border-radius: 4px;
+    }
+    .delete-btn {
+      background: #ff4d4f;
+      color: white;
+      padding: 5px 10px;
+      margin: 2px;
+      border-radius: 4px;
+    }
+    #celebrate {
+      font-size: 3em;
+      color: #ffd700;
+      display: none;
+      animation: popper 1s ease-in-out;
+    }
+    @keyframes popper {
+      0% { transform: scale(0.5); opacity: 0; }
+      50% { transform: scale(1.5); opacity: 1; }
+      100% { transform: scale(0.5); opacity: 0; }
+    }
   </style>
 </head>
 <body>
+  <div id="ticker">Loading BTC & SOL prices...</div>
   <h1>📈 Memecoin PNL Calculator</h1>
 
   <input id="coinName" placeholder="💠 Coin Name">
@@ -53,6 +95,7 @@
   <label>To: <input type="date" id="toDate"></label>
   <button onclick="filterTrades()">Filter</button>
 
+  <div id="celebrate">🎉</div>
   <div id="result"></div>
   <div id="totals"></div>
 
@@ -82,6 +125,18 @@
     let trades = JSON.parse(localStorage.getItem("trades") || "[]");
     let editIndex = -1;
 
+    async function fetchPrices() {
+      try {
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,solana&vs_currencies=usd');
+        const data = await res.json();
+        document.getElementById('ticker').innerText = `📉 BTC: $${data.bitcoin.usd} | ⚡ SOL: $${data.solana.usd}`;
+      } catch {
+        document.getElementById('ticker').innerText = 'Failed to load prices';
+      }
+    }
+    fetchPrices();
+    setInterval(fetchPrices, 15000);
+
     function calculateProfit() {
       const coin = document.getElementById("coinName").value;
       const inv = parseFloat(document.getElementById("investment").value);
@@ -99,6 +154,13 @@
       localStorage.setItem("trades", JSON.stringify(trades));
       renderTrades(trades);
       clearFields();
+
+      if (percent >= 100) {
+        const pop = document.getElementById("celebrate");
+        pop.style.display = "inline-block";
+        new Audio("https://www.soundjay.com/human/applause-01.mp3").play();
+        setTimeout(() => pop.style.display = "none", 1500);
+      }
     }
 
     function clearFields() {
@@ -132,7 +194,7 @@
         percentSum += t.percent;
         t.profit >= 0 ? wins++ : losses++;
       });
-      document.getElementById("totals").innerText =
+      document.getElementById("result").innerText =
         `Total Trades: ${data.length} | Net Profit: $${total.toFixed(2)} | Avg Gain: ${(percentSum / data.length || 0).toFixed(2)}% | Wins: ${wins} | Losses: ${losses}`;
     }
 
