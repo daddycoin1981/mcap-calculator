@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>📈 Memecoin PNL Calculator</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       background-color: #0b0f19;
@@ -27,9 +28,6 @@
       border-radius: 6px;
       font-size: 1em;
     }
-    input[type="date"] {
-      width: 160px;
-    }
     table {
       margin: 20px auto;
       border-collapse: collapse;
@@ -44,28 +42,10 @@
       background-color: #1f2a40;
       color: #00ffa3;
     }
-    .loss-row {
-      background-color: #4a1d1d;
-    }
-    .footer {
-      margin-top: 20px;
-      font-size: 0.9em;
-      color: #aaa;
-    }
-    .edit-btn {
-      background: #ffaa00;
-      color: black;
-      padding: 5px 10px;
-      margin: 2px;
-      border-radius: 4px;
-    }
-    .delete-btn {
-      background: #ff4d4f;
-      color: white;
-      padding: 5px 10px;
-      margin: 2px;
-      border-radius: 4px;
-    }
+    .loss-row { background-color: #4a1d1d; }
+    .footer { margin-top: 20px; font-size: 0.9em; color: #aaa; }
+    .edit-btn { background: #ffaa00; color: black; padding: 5px 10px; margin: 2px; border-radius: 4px; }
+    .delete-btn { background: #ff4d4f; color: white; padding: 5px 10px; margin: 2px; border-radius: 4px; }
     #celebrate {
       font-size: 3em;
       color: #ffd700;
@@ -76,6 +56,12 @@
       0% { transform: scale(0.5); opacity: 0; }
       50% { transform: scale(1.5); opacity: 1; }
       100% { transform: scale(0.5); opacity: 0; }
+    }
+    canvas {
+      margin-top: 40px;
+      background-color: #1e1e2f;
+      padding: 10px;
+      border-radius: 10px;
     }
   </style>
 </head>
@@ -117,13 +103,15 @@
     <tbody id="historyBody"></tbody>
   </table>
 
+  <canvas id="profitChart" height="100"></canvas>
+
   <div class="footer">
     Developed by <strong>10Solup</strong> — Follow the dev on <a href="https://x.com/10Solup" target="_blank">X @10Solup</a>
   </div>
 
   <script>
     let trades = JSON.parse(localStorage.getItem("trades") || "[]");
-    let editIndex = -1;
+    let chart;
 
     async function fetchPrices() {
       try {
@@ -153,6 +141,7 @@
       trades.unshift(record);
       localStorage.setItem("trades", JSON.stringify(trades));
       renderTrades(trades);
+      updateChart(trades);
       clearFields();
 
       if (percent >= 100) {
@@ -165,7 +154,6 @@
 
     function clearFields() {
       ["coinName","investment","entryMcap","exitMcap"].forEach(id => document.getElementById(id).value = "");
-      editIndex = -1;
     }
 
     function renderTrades(data) {
@@ -202,6 +190,7 @@
       trades.splice(index, 1);
       localStorage.setItem("trades", JSON.stringify(trades));
       renderTrades(trades);
+      updateChart(trades);
     }
 
     function editRow(index) {
@@ -212,6 +201,7 @@
       document.getElementById("exitMcap").value = t.exit;
       trades.splice(index, 1);
       renderTrades(trades);
+      updateChart(trades);
     }
 
     function filterTrades() {
@@ -224,9 +214,55 @@
         return d >= fTime && d <= tTime;
       });
       renderTrades(filtered);
+      updateChart(filtered);
+    }
+
+    function updateChart(data) {
+      const ctx = document.getElementById("profitChart").getContext("2d");
+      const labels = data.map((_, i) => `T${data.length - i}`);
+      const profits = data.map(t => t.profit).reverse();
+      const percents = data.map(t => t.percent.toFixed(1)).reverse();
+      const tooltips = data.map(t => `$${t.profit.toFixed(2)} (${t.percent.toFixed(1)}%)`).reverse();
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Profit ($)',
+            data: profits,
+            borderColor: '#00ffa3',
+            backgroundColor: 'rgba(0,255,163,0.1)',
+            tension: 0.3,
+            fill: true,
+            pointBackgroundColor: profits.map(p => p >= 0 ? '#00ffa3' : '#ff4d4f')
+          }]
+        },
+        options: {
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const idx = context.dataIndex;
+                  return tooltips[idx];
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              title: { display: true, text: 'Profit in $' }
+            },
+            x: {
+              title: { display: true, text: 'Trade Count (T1 = Latest)' }
+            }
+          }
+        }
+      });
     }
 
     renderTrades(trades);
+    updateChart(trades);
   </script>
 </body>
 </html>
