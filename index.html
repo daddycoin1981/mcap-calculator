@@ -6,18 +6,25 @@
   <title>MCAP Profit Calculator</title>
   <style>
     body {
-      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-      font-family: 'Segoe UI', sans-serif;
+      background-color: #0b0f19;
+      font-family: 'Arial Rounded MT Bold', sans-serif;
       color: #ffffff;
       text-align: center;
       padding: 30px;
     }
     h1 {
       font-size: 2em;
-      color: #00ffcc;
+      color: #00ffa3;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+      text-align: left;
+      margin-left: 38%;
     }
     input, button {
-      margin: 10px;
+      margin: 8px;
       padding: 12px;
       border: none;
       border-radius: 6px;
@@ -38,21 +45,22 @@
     table {
       margin: 20px auto;
       border-collapse: collapse;
-      width: 90%;
-      background-color: #1e1e2f;
+      width: 95%;
+      background-color: #121826;
       color: #fff;
     }
     th, td {
       padding: 12px;
-      border: 1px solid #555;
+      border: 1px solid #444;
     }
     th {
-      background-color: #293a4d;
+      background-color: #1f2a40;
+      color: #00ffa3;
     }
-    .result {
+    .result, .totals {
       margin-top: 20px;
-      font-size: 1.3em;
-      color: #00ffcc;
+      font-size: 1.2em;
+      color: #00ffa3;
     }
     .footer {
       margin-top: 40px;
@@ -63,27 +71,37 @@
       color: #00ffa3;
       text-decoration: none;
     }
-    .delete-btn {
-      background-color: red;
+    .delete-btn, .edit-btn {
+      background-color: #ff4d4f;
       color: white;
       border: none;
-      padding: 6px 12px;
+      padding: 6px 10px;
       border-radius: 4px;
       cursor: pointer;
+      margin: 2px;
+    }
+    .edit-btn {
+      background-color: #ffaa00;
     }
   </style>
 </head>
 <body>
   <h1>Memecoin MCAP Profit Calculator</h1>
 
-  <input type="text" id="coinName" placeholder="Coin Name" /><br />
-  <input type="number" id="investment" placeholder="Investment ($)" /><br />
-  <input type="number" id="entryMcap" placeholder="Entry MCAP ($)" /><br />
-  <input type="number" id="exitMcap" placeholder="Exit MCAP ($)" /><br />
+  <label for="coinName">Coin Name:</label>
+  <input type="text" id="coinName" placeholder="e.g. FLOKI" onkeydown="focusNext(event, 'investment')" />
+  <label for="investment">Investment ($):</label>
+  <input type="number" id="investment" placeholder="e.g. 20" onkeydown="focusNext(event, 'entryMcap')" />
+  <label for="entryMcap">Entry MCAP ($):</label>
+  <input type="number" id="entryMcap" placeholder="e.g. 15000" onkeydown="focusNext(event, 'exitMcap')" />
+  <label for="exitMcap">Exit MCAP ($):</label>
+  <input type="number" id="exitMcap" placeholder="e.g. 22000" onkeydown="if(event.key==='Enter'){calculateProfit()}" />
+  <br />
   <button onclick="calculateProfit()">Calculate</button>
   <button onclick="clearFields()">Clear Fields</button>
 
   <div class="result" id="result"></div>
+  <div class="totals" id="totals"></div>
 
   <h2>Trade History</h2>
   <table id="historyTable">
@@ -102,16 +120,20 @@
   </table>
 
   <div class="footer">
-    Developed by <strong>Tensolab</strong> — Follow the dev on <a href="https://x.com/10Solup" target="_blank">X @10Solup</a> & <a href="https://youtube.com/@10Solup" target="_blank">YouTube @10Solup</a>
+    Developed by <strong>10Solup</strong> — Follow the dev on <a href="https://x.com/10Solup" target="_blank">X @10Solup</a> & <a href="https://youtube.com/@10Solup" target="_blank">YouTube @10Solup</a>
   </div>
 
   <script>
+    let totalProfit = 0;
+    let totalPercent = 0;
+    let tradeCount = 0;
+
     function calculateProfit() {
       const coinName = document.getElementById('coinName').value;
       const investment = parseFloat(document.getElementById('investment').value);
       const entryMcap = parseFloat(document.getElementById('entryMcap').value);
       const exitMcap = parseFloat(document.getElementById('exitMcap').value);
-      const fee = 0.60;
+      const fee = 0.40;
 
       if (!coinName || isNaN(investment) || isNaN(entryMcap) || isNaN(exitMcap)) {
         alert("Please fill all fields correctly.");
@@ -121,8 +143,12 @@
       const profit = ((exitMcap / entryMcap) * investment) - investment - fee;
       const profitPercent = ((exitMcap - entryMcap) / entryMcap) * 100;
 
-      const result = `Profit: $${profit.toFixed(2)} | Gain: ${profitPercent.toFixed(2)}%`;
-      document.getElementById('result').innerText = result;
+      totalProfit += profit;
+      totalPercent += profitPercent;
+      tradeCount++;
+
+      document.getElementById('result').innerText = `Profit: $${profit.toFixed(2)} | Gain: ${profitPercent.toFixed(2)}%`;
+      document.getElementById('totals').innerText = `Net Total Profit: $${totalProfit.toFixed(2)} | Avg Gain: ${(totalPercent / tradeCount).toFixed(2)}%`;
 
       const tableBody = document.getElementById('historyTable').querySelector('tbody');
       const newRow = document.createElement('tr');
@@ -133,9 +159,13 @@
         <td>${exitMcap}</td>
         <td>$${profit.toFixed(2)}</td>
         <td>${profitPercent.toFixed(2)}%</td>
-        <td><button class='delete-btn' onclick='deleteRow(this)'>Delete</button></td>
+        <td>
+          <button class='edit-btn' onclick='editRow(this)'>Edit</button>
+          <button class='delete-btn' onclick='deleteRow(this)'>Delete</button>
+        </td>
       `;
       tableBody.appendChild(newRow);
+      clearFields();
     }
 
     function clearFields() {
@@ -149,6 +179,22 @@
     function deleteRow(btn) {
       const row = btn.closest('tr');
       row.remove();
+    }
+
+    function editRow(btn) {
+      const row = btn.closest('tr');
+      const cells = row.querySelectorAll('td');
+      document.getElementById('coinName').value = cells[0].innerText;
+      document.getElementById('investment').value = parseFloat(cells[1].innerText.replace('$', ''));
+      document.getElementById('entryMcap').value = parseFloat(cells[2].innerText);
+      document.getElementById('exitMcap').value = parseFloat(cells[3].innerText);
+      row.remove();
+    }
+
+    function focusNext(e, nextId) {
+      if (e.key === 'Enter') {
+        document.getElementById(nextId).focus();
+      }
     }
   </script>
 </body>
