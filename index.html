@@ -111,6 +111,11 @@
 
   <canvas id="profitChart" height="100"></canvas>
 
+  <div id="summaryStats" style="margin-top: 30px; font-size: 1.1rem;">
+    <p>✅ <strong>Total Profit:</strong> $<span id="totalProfit">0.00</span> | <span id="totalProfitPct">0.00%</span></p>
+    <p>❌ <strong>Total Loss:</strong> $<span id="totalLoss">0.00</span> | <span id="totalLossPct">0.00%</span></p>
+  </div>
+
   <footer>
     Developed by 10Solup | Contact: X/@10solup | YouTube/@10solup
   </footer>
@@ -161,6 +166,7 @@
       localStorage.setItem("trades", JSON.stringify(trades));
       renderTrades(trades);
       updateChart(trades);
+      updateSummaryStats(trades);
       if (percent >= 100) {
         document.getElementById("celebrate").style.display = 'block';
         setTimeout(() => document.getElementById("celebrate").style.display = 'none', 1500);
@@ -190,6 +196,7 @@
         `;
         body.appendChild(row);
       });
+      updateSummaryStats(data);
     }
 
     function deleteRow(index) {
@@ -197,6 +204,7 @@
       localStorage.setItem("trades", JSON.stringify(trades));
       renderTrades(trades);
       updateChart(trades);
+      updateSummaryStats(trades);
     }
 
     function editTrade(index) {
@@ -251,6 +259,19 @@
       });
     }
 
+    function updateSummaryStats(data) {
+      const totalProfitTrades = data.filter(t => t.profit >= 0);
+      const totalLossTrades = data.filter(t => t.profit < 0);
+      const profitSum = totalProfitTrades.reduce((sum, t) => sum + t.profit, 0);
+      const lossSum = totalLossTrades.reduce((sum, t) => sum + t.profit, 0);
+      const profitPct = totalProfitTrades.reduce((sum, t) => sum + t.percent, 0);
+      const lossPct = totalLossTrades.reduce((sum, t) => sum + t.percent, 0);
+      document.getElementById("totalProfit").innerText = profitSum.toFixed(2);
+      document.getElementById("totalLoss").innerText = Math.abs(lossSum).toFixed(2);
+      document.getElementById("totalProfitPct").innerText = profitPct.toFixed(2) + "%";
+      document.getElementById("totalLossPct").innerText = Math.abs(lossPct).toFixed(2) + "%";
+    }
+
     function exportToExcel() {
       const ws = XLSX.utils.json_to_sheet(trades);
       const wb = XLSX.utils.book_new();
@@ -260,6 +281,7 @@
 
     renderTrades(trades);
     updateChart(trades);
+    updateSummaryStats(trades);
   </script>
 </body>
 </html>
