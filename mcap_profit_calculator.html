@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MCAP Profit Calculator</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    input, button { margin: 5px; padding: 8px; }
+    table, th, td { border: 1px solid black; border-collapse: collapse; padding: 5px; }
+    th { background-color: #f2f2f2; }
+    .result { margin-top: 10px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>Memecoin MCAP Profit Calculator</h2>
+
+  <label>Coin Name: <input type="text" id="coinName" /></label><br />
+  <label>Investment ($): <input type="number" id="investment" /></label><br />
+  <label>Entry MCAP ($): <input type="number" id="entryMcap" /></label><br />
+  <label>Exit MCAP ($): <input type="number" id="exitMcap" /></label><br />
+  <button onclick="calculateProfit()">Calculate</button>
+
+  <div class="result" id="result"></div>
+
+  <h3>Trade History</h3>
+  <table id="historyTable">
+    <thead>
+      <tr>
+        <th>Coin</th>
+        <th>Investment ($)</th>
+        <th>Entry MCAP</th>
+        <th>Exit MCAP</th>
+        <th>Profit ($)</th>
+        <th>Profit (%)</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    function calculateProfit() {
+      const coinName = document.getElementById('coinName').value;
+      const investment = parseFloat(document.getElementById('investment').value);
+      const entryMcap = parseFloat(document.getElementById('entryMcap').value);
+      const exitMcap = parseFloat(document.getElementById('exitMcap').value);
+      const fee = 0.60;
+
+      if (!coinName || isNaN(investment) || isNaN(entryMcap) || isNaN(exitMcap)) {
+        alert("Please fill all fields correctly.");
+        return;
+      }
+
+      const profit = ((exitMcap / entryMcap) * investment) - investment - fee;
+      const profitPercent = ((exitMcap - entryMcap) / entryMcap) * 100;
+
+      const result = `Profit: $${profit.toFixed(2)} | Gain: ${profitPercent.toFixed(2)}%`;
+      document.getElementById('result').innerText = result;
+
+      // Append to history table
+      const tableBody = document.getElementById('historyTable').querySelector('tbody');
+      const newRow = document.createElement('tr');
+      newRow.innerHTML = `
+        <td>${coinName}</td>
+        <td>$${investment.toFixed(2)}</td>
+        <td>${entryMcap}</td>
+        <td>${exitMcap}</td>
+        <td>$${profit.toFixed(2)}</td>
+        <td>${profitPercent.toFixed(2)}%</td>
+      `;
+      tableBody.appendChild(newRow);
+    }
+  </script>
+</body>
+</html>
