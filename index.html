@@ -63,6 +63,14 @@
       color: #00ffa3;
       text-decoration: none;
     }
+    .delete-btn {
+      background-color: red;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -87,6 +95,7 @@
         <th>Exit MCAP</th>
         <th>Profit ($)</th>
         <th>Profit (%)</th>
+        <th>Action</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -124,6 +133,7 @@
         <td>${exitMcap}</td>
         <td>$${profit.toFixed(2)}</td>
         <td>${profitPercent.toFixed(2)}%</td>
+        <td><button class='delete-btn' onclick='deleteRow(this)'>Delete</button></td>
       `;
       tableBody.appendChild(newRow);
     }
@@ -134,6 +144,11 @@
       document.getElementById('entryMcap').value = '';
       document.getElementById('exitMcap').value = '';
       document.getElementById('result').innerText = '';
+    }
+
+    function deleteRow(btn) {
+      const row = btn.closest('tr');
+      row.remove();
     }
   </script>
 </body>
