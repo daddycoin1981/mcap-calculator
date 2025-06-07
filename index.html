@@ -12,17 +12,6 @@
       text-align: center;
       padding: 30px;
     }
-    h1 {
-      font-size: 2em;
-      color: #00ffa3;
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-      font-weight: bold;
-      text-align: left;
-      margin-left: 38%;
-    }
     input, button {
       margin: 8px;
       padding: 12px;
@@ -30,107 +19,45 @@
       border-radius: 6px;
       font-size: 1em;
     }
-    input {
-      width: 250px;
-    }
-    button {
-      background-color: #00ffa3;
-      color: #000;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #00cc88;
+    input[type="date"] {
+      width: 160px;
     }
     table {
       margin: 20px auto;
       border-collapse: collapse;
       width: 95%;
       background-color: #121826;
-      color: #fff;
     }
     th, td {
-      padding: 12px;
+      padding: 10px;
       border: 1px solid #444;
     }
-    th {
-      background-color: #1f2a40;
-      color: #00ffa3;
-    }
-    .result, .totals {
-      margin-top: 20px;
-      font-size: 1.2em;
-      color: #00ffa3;
-    }
-    .footer {
-      margin-top: 40px;
-      font-size: 0.9em;
-      color: #aaa;
-    }
-    .footer a {
-      color: #00ffa3;
-      text-decoration: none;
-    }
-    .delete-btn, .edit-btn {
-      background-color: #ff4d4f;
-      color: white;
-      border: none;
-      padding: 6px 10px;
-      border-radius: 4px;
-      cursor: pointer;
-      margin: 2px;
-    }
-    .edit-btn {
-      background-color: #ffaa00;
-    }
-    .loss-row {
-      background-color: #4a1d1d !important;
-    }
-    @keyframes popper {
-      0% { transform: scale(0.5); opacity: 0; }
-      50% { transform: scale(1.5); opacity: 1; }
-      100% { transform: scale(0.5); opacity: 0; }
-    }
-    #celebrate {
-      font-size: 3em;
-      animation: popper 1s ease;
-      display: none;
-      color: #ffd700;
-    }
-    #ticker {
-      background: #1a1a1a;
-      color: #00ffa3;
-      padding: 10px;
-      font-size: 1em;
-      overflow: hidden;
-      white-space: nowrap;
-      box-shadow: inset 0 0 10px #00ffa3;
-      margin-bottom: 20px;
-    }
+    .loss-row { background-color: #4a1d1d; }
+    .footer { margin-top: 20px; font-size: 0.9em; color: #aaa; }
+    .edit-btn { background: #ffaa00; color: black; padding: 5px 10px; margin: 2px; border-radius: 4px; }
+    .delete-btn { background: #ff4d4f; color: white; padding: 5px 10px; margin: 2px; border-radius: 4px; }
   </style>
 </head>
 <body>
-  <div id="ticker">Loading prices...</div>
   <h1>📈 Memecoin PNL Calculator</h1>
 
-  <label for="coinName">💠 Coin Name:</label>
-  <input type="text" id="coinName" placeholder="e.g. FLOKI" onkeydown="focusNext(event, 'investment')" />
-  <label for="investment">💵 Investment ($):</label>
-  <input type="number" id="investment" placeholder="e.g. 20" onkeydown="focusNext(event, 'entryMcap')" />
-  <label for="entryMcap">🟢 Entry MCAP ($):</label>
-  <input type="number" id="entryMcap" placeholder="e.g. 15000" onkeydown="focusNext(event, 'exitMcap')" />
-  <label for="exitMcap">🔴 Exit MCAP ($):</label>
-  <input type="number" id="exitMcap" placeholder="e.g. 22000" onkeydown="if(event.key==='Enter'){calculateProfit()}" />
-  <br />
+  <input id="coinName" placeholder="💠 Coin Name">
+  <input id="investment" type="number" placeholder="💵 Investment ($)">
+  <input id="entryMcap" type="number" placeholder="🟢 Entry MCAP ($)">
+  <input id="exitMcap" type="number" placeholder="🔴 Exit MCAP ($)">
   <button onclick="calculateProfit()">Calculate</button>
   <button onclick="clearFields()">Clear Fields</button>
 
-  <div class="result" id="result"></div>
-  <div class="totals" id="totals"></div>
-  <div id="celebrate">🎉</div>
+  <br><br>
+  <label>Filter From: <input type="date" id="fromDate"></label>
+  <label>To: <input type="date" id="toDate"></label>
+  <button onclick="filterTrades()">Filter</button>
+
+  <div id="result"></div>
+  <div id="totals"></div>
 
   <h2>Trade History</h2>
-  <table id="historyTable">
+  <table>
     <thead>
       <tr>
         <th>#</th>
@@ -144,123 +71,100 @@
         <th>Action</th>
       </tr>
     </thead>
-    <tbody></tbody>
+    <tbody id="historyBody"></tbody>
   </table>
 
   <div class="footer">
-    Developed by <strong>10Solup</strong> — Follow the dev on <a href="https://x.com/10Solup" target="_blank">X @10Solup</a> & <a href="https://youtube.com/@10Solup" target="_blank">YouTube @10Solup</a>
+    Developed by <strong>10Solup</strong> — Follow the dev on <a href="https://x.com/10Solup" target="_blank">X @10Solup</a>
   </div>
 
   <script>
-    let totalProfit = 0;
-    let totalPercent = 0;
-    let tradeCount = 0;
-    let tradeNumber = 0;
-    let profitableTrades = 0;
-    let lossTrades = 0;
-    let editing = false;
-
-    async function fetchPrices() {
-      try {
-        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana,bitcoin&vs_currencies=usd');
-        const data = await res.json();
-        document.getElementById('ticker').innerText = `📉 BTC: $${data.bitcoin.usd} | ⚡ SOL: $${data.solana.usd}`;
-      } catch (err) {
-        document.getElementById('ticker').innerText = 'Failed to load prices';
-      }
-    }
-    setInterval(fetchPrices, 5000);
-    fetchPrices();
+    let trades = JSON.parse(localStorage.getItem("trades") || "[]");
+    let editIndex = -1;
 
     function calculateProfit() {
-      if (editing) return;
+      const coin = document.getElementById("coinName").value;
+      const inv = parseFloat(document.getElementById("investment").value);
+      const entry = parseFloat(document.getElementById("entryMcap").value);
+      const exit = parseFloat(document.getElementById("exitMcap").value);
+      const fee = 0.4;
+      if (!coin || isNaN(inv) || isNaN(entry) || isNaN(exit)) return;
 
-      const coinName = document.getElementById('coinName').value;
-      const investment = parseFloat(document.getElementById('investment').value);
-      const entryMcap = parseFloat(document.getElementById('entryMcap').value);
-      const exitMcap = parseFloat(document.getElementById('exitMcap').value);
-      const fee = 0.40;
+      const profit = ((exit / entry) * inv - inv - fee);
+      const percent = ((exit - entry) / entry) * 100;
+      const date = new Date().toISOString();
 
-      if (!coinName || isNaN(investment) || isNaN(entryMcap) || isNaN(exitMcap)) {
-        alert("Please fill all fields correctly.");
-        return;
-      }
-
-      const profit = ((exitMcap / entryMcap) * investment) - investment - fee;
-      const profitPercent = ((exitMcap - entryMcap) / entryMcap) * 100;
-
-      totalProfit += profit;
-      totalPercent += profitPercent;
-      tradeCount++;
-      tradeNumber++;
-      if (profit >= 0) profitableTrades++;
-      else lossTrades++;
-
-      const now = new Date();
-      const dateStr = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
-
-      document.getElementById('result').innerText = `Profit: $${profit.toFixed(2)} | Gain: ${profitPercent.toFixed(2)}%`;
-      document.getElementById('totals').innerText = `Total Trades: ${tradeCount} | Net Profit: $${totalProfit.toFixed(2)} | Avg Gain: ${(totalPercent / tradeCount).toFixed(2)}% | Wins: ${profitableTrades} | Losses: ${lossTrades}`;
-
-      const tableBody = document.getElementById('historyTable').querySelector('tbody');
-      const newRow = document.createElement('tr');
-      if (profit < 0) newRow.classList.add('loss-row');
-      newRow.innerHTML = `
-        <td>${tradeNumber}</td>
-        <td>${dateStr}</td>
-        <td>${coinName}</td>
-        <td>$${investment.toFixed(2)}</td>
-        <td>${entryMcap}</td>
-        <td>${exitMcap}</td>
-        <td>$${profit.toFixed(2)}</td>
-        <td>${profitPercent.toFixed(2)}%</td>
-        <td>
-          <button class='edit-btn' onclick='editRow(this)'>Edit</button>
-          <button class='delete-btn' onclick='deleteRow(this)'>Delete</button>
-        </td>
-      `;
-      tableBody.insertBefore(newRow, tableBody.firstChild);
-
-      if (profitPercent >= 100) {
-        const pop = document.getElementById("celebrate");
-        pop.style.display = "inline-block";
-        new Audio("https://www.soundjay.com/human/applause-01.mp3").play();
-        setTimeout(() => pop.style.display = "none", 1500);
-      }
-
+      const record = { date, coin, inv, entry, exit, profit, percent };
+      trades.unshift(record);
+      localStorage.setItem("trades", JSON.stringify(trades));
+      renderTrades(trades);
       clearFields();
     }
 
     function clearFields() {
-      document.getElementById('coinName').value = '';
-      document.getElementById('investment').value = '';
-      document.getElementById('entryMcap').value = '';
-      document.getElementById('exitMcap').value = '';
-      document.getElementById('result').innerText = '';
-      editing = false;
+      ["coinName","investment","entryMcap","exitMcap"].forEach(id => document.getElementById(id).value = "");
+      editIndex = -1;
     }
 
-    function deleteRow(btn) {
-      const row = btn.closest('tr');
-      row.remove();
+    function renderTrades(data) {
+      const body = document.getElementById("historyBody");
+      body.innerHTML = "";
+      let total = 0, percentSum = 0, wins = 0, losses = 0;
+      data.forEach((t, i) => {
+        const row = document.createElement("tr");
+        if (t.profit < 0) row.className = "loss-row";
+        row.innerHTML = `
+          <td>${i + 1}</td>
+          <td>${new Date(t.date).toLocaleString()}</td>
+          <td>${t.coin}</td>
+          <td>$${t.inv.toFixed(2)}</td>
+          <td>${t.entry}</td>
+          <td>${t.exit}</td>
+          <td>$${t.profit.toFixed(2)}</td>
+          <td>${t.percent.toFixed(2)}%</td>
+          <td>
+            <button class="edit-btn" onclick="editRow(${i})">Edit</button>
+            <button class="delete-btn" onclick="deleteRow(${i})">Delete</button>
+          </td>
+        `;
+        body.appendChild(row);
+        total += t.profit;
+        percentSum += t.percent;
+        t.profit >= 0 ? wins++ : losses++;
+      });
+      document.getElementById("totals").innerText =
+        `Total Trades: ${data.length} | Net Profit: $${total.toFixed(2)} | Avg Gain: ${(percentSum / data.length || 0).toFixed(2)}% | Wins: ${wins} | Losses: ${losses}`;
     }
 
-    function editRow(btn) {
-      const row = btn.closest('tr');
-      const cells = row.querySelectorAll('td');
-      document.getElementById('coinName').value = cells[2].innerText;
-      document.getElementById('investment').value = parseFloat(cells[3].innerText.replace('$', ''));
-      document.getElementById('entryMcap').value = parseFloat(cells[4].innerText);
-      document.getElementById('exitMcap').value = parseFloat(cells[5].innerText);
-      row.remove();
-      editing = true;
+    function deleteRow(index) {
+      trades.splice(index, 1);
+      localStorage.setItem("trades", JSON.stringify(trades));
+      renderTrades(trades);
     }
 
-    function focusNext(e, nextId) {
-      if (e.key === 'Enter') {
-        document.getElementById(nextId).focus();
-      }
+    function editRow(index) {
+      const t = trades[index];
+      document.getElementById("coinName").value = t.coin;
+      document.getElementById("investment").value = t.inv;
+      document.getElementById("entryMcap").value = t.entry;
+      document.getElementById("exitMcap").value = t.exit;
+      trades.splice(index, 1);
+      renderTrades(trades);
     }
+
+    function filterTrades() {
+      const from = document.getElementById("fromDate").value;
+      const to = document.getElementById("toDate").value;
+      const fTime = from ? new Date(from).getTime() : -Infinity;
+      const tTime = to ? new Date(to).getTime() + 86400000 : Infinity;
+      const filtered = trades.filter(t => {
+        const d = new Date(t.date).getTime();
+        return d >= fTime && d <= tTime;
+      });
+      renderTrades(filtered);
+    }
+
+    renderTrades(trades);
   </script>
 </body>
 </html>
