@@ -1,29 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MCAP Profit Calculator</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    input, button { margin: 5px; padding: 8px; }
-    table, th, td { border: 1px solid black; border-collapse: collapse; padding: 5px; }
-    th { background-color: #f2f2f2; }
-    .result { margin-top: 10px; font-weight: bold; }
+    body {
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      font-family: 'Segoe UI', sans-serif;
+      color: #ffffff;
+      text-align: center;
+      padding: 30px;
+    }
+    h1 {
+      font-size: 2em;
+      color: #00ffcc;
+    }
+    input, button {
+      margin: 10px;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 1em;
+    }
+    input {
+      width: 250px;
+    }
+    button {
+      background-color: #00ffa3;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #00cc88;
+    }
+    table {
+      margin: 20px auto;
+      border-collapse: collapse;
+      width: 90%;
+      background-color: #1e1e2f;
+      color: #fff;
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #555;
+    }
+    th {
+      background-color: #293a4d;
+    }
+    .result {
+      margin-top: 20px;
+      font-size: 1.3em;
+      color: #00ffcc;
+    }
+    .footer {
+      margin-top: 40px;
+      font-size: 0.9em;
+      color: #aaa;
+    }
+    .footer a {
+      color: #00ffa3;
+      text-decoration: none;
+    }
   </style>
 </head>
 <body>
-  <h2>Memecoin MCAP Profit Calculator</h2>
+  <h1>Memecoin MCAP Profit Calculator</h1>
 
-  <label>Coin Name: <input type="text" id="coinName" /></label><br />
-  <label>Investment ($): <input type="number" id="investment" /></label><br />
-  <label>Entry MCAP ($): <input type="number" id="entryMcap" /></label><br />
-  <label>Exit MCAP ($): <input type="number" id="exitMcap" /></label><br />
+  <input type="text" id="coinName" placeholder="Coin Name" /><br />
+  <input type="number" id="investment" placeholder="Investment ($)" /><br />
+  <input type="number" id="entryMcap" placeholder="Entry MCAP ($)" /><br />
+  <input type="number" id="exitMcap" placeholder="Exit MCAP ($)" /><br />
   <button onclick="calculateProfit()">Calculate</button>
+  <button onclick="clearFields()">Clear Fields</button>
 
   <div class="result" id="result"></div>
 
-  <h3>Trade History</h3>
+  <h2>Trade History</h2>
   <table id="historyTable">
     <thead>
       <tr>
@@ -37,6 +91,10 @@
     </thead>
     <tbody></tbody>
   </table>
+
+  <div class="footer">
+    Developed by <strong>Tensolab</strong> — Follow the dev on <a href="https://x.com/10Solup" target="_blank">X @10Solup</a> & <a href="https://youtube.com/@10Solup" target="_blank">YouTube @10Solup</a>
+  </div>
 
   <script>
     function calculateProfit() {
@@ -57,7 +115,6 @@
       const result = `Profit: $${profit.toFixed(2)} | Gain: ${profitPercent.toFixed(2)}%`;
       document.getElementById('result').innerText = result;
 
-      // Append to history table
       const tableBody = document.getElementById('historyTable').querySelector('tbody');
       const newRow = document.createElement('tr');
       newRow.innerHTML = `
@@ -69,6 +126,14 @@
         <td>${profitPercent.toFixed(2)}%</td>
       `;
       tableBody.appendChild(newRow);
+    }
+
+    function clearFields() {
+      document.getElementById('coinName').value = '';
+      document.getElementById('investment').value = '';
+      document.getElementById('entryMcap').value = '';
+      document.getElementById('exitMcap').value = '';
+      document.getElementById('result').innerText = '';
     }
   </script>
 </body>
