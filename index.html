@@ -6,6 +6,7 @@
   <title>📈 Memecoin PNL Calculator</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     body {
       background-color: #0b0f19;
@@ -64,6 +65,12 @@
       background-color: #00ffa3;
       color: #000;
       font-weight: bold;
+      margin: 4px;
+    }
+    footer {
+      margin-top: 50px;
+      color: #888;
+      font-size: 0.9rem;
     }
   </style>
 </head>
@@ -75,11 +82,12 @@
   <h1>📈 Memecoin PNL Calculator</h1>
 
   <div class="input-wrapper">
-    <input id="coin" placeholder="Coin Name" />
-    <input id="investment" placeholder="Investment ($)" type="number" />
-    <input id="entry" placeholder="Entry MCAP" type="number" />
-    <input id="exit" placeholder="Exit MCAP" type="number" />
+    <input id="coin" placeholder="💠 Coin Name" />
+    <input id="investment" placeholder="💵 Investment ($)" type="number" />
+    <input id="entry" placeholder="🟢 Entry MCAP" type="number" />
+    <input id="exit" placeholder="🔴 Exit MCAP" type="number" />
     <button onclick="addTrade()">Add Trade</button>
+    <button onclick="exportToExcel()">Export to Excel</button>
   </div>
 
   <div id="celebrate">🎉</div>
@@ -102,6 +110,10 @@
   </table>
 
   <canvas id="profitChart" height="100"></canvas>
+
+  <footer>
+    Developed by 10Solup | Contact: X/@10solup | YouTube/@10solup
+  </footer>
 
   <script>
     let trades = JSON.parse(localStorage.getItem("trades") || "[]");
@@ -145,7 +157,7 @@
       const percent = ((exit - entry) / entry) * 100;
       const netProfit = profit - 0.40; // default fee
       const obj = { coin, inv, entry, exit, profit: netProfit, percent, date };
-      trades.push(obj);
+      trades.unshift(obj);
       localStorage.setItem("trades", JSON.stringify(trades));
       renderTrades(trades);
       updateChart(trades);
@@ -171,7 +183,10 @@
           <td>${t.exit}</td>
           <td>$${t.profit.toFixed(2)}</td>
           <td>${t.percent.toFixed(2)}%</td>
-          <td><button onclick="deleteRow(${i})">Delete</button></td>
+          <td>
+            <button onclick="editTrade(${i})">Edit</button>
+            <button onclick="deleteRow(${i})">Delete</button>
+          </td>
         `;
         body.appendChild(row);
       });
@@ -184,11 +199,19 @@
       updateChart(trades);
     }
 
+    function editTrade(index) {
+      const t = trades[index];
+      document.getElementById("coin").value = t.coin;
+      document.getElementById("investment").value = t.inv;
+      document.getElementById("entry").value = t.entry;
+      document.getElementById("exit").value = t.exit;
+      deleteRow(index);
+    }
+
     function updateChart(data) {
       const ctx = document.getElementById("profitChart").getContext("2d");
       const labels = data.map((_, i) => `T${data.length - i}`);
       const profits = data.map(t => t.profit).reverse();
-      const percents = data.map(t => t.percent.toFixed(1)).reverse();
       const tooltips = data.map(t => `$${t.profit.toFixed(2)} (${t.percent.toFixed(1)}%)`).reverse();
       if (chart) chart.destroy();
       chart = new Chart(ctx, {
@@ -226,6 +249,13 @@
           }
         }
       });
+    }
+
+    function exportToExcel() {
+      const ws = XLSX.utils.json_to_sheet(trades);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Trades");
+      XLSX.writeFile(wb, "Memecoin_PNL_Calculator.xlsx");
     }
 
     renderTrades(trades);
