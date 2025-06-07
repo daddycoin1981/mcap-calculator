@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>📈 Memecoin PNL Calculator</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
   <style>
     body {
       background-color: #0b0f19;
@@ -46,10 +47,40 @@
       50% { transform: scale(1.5); opacity: 1; }
       100% { transform: scale(0.5); opacity: 0; }
     }
+    .ticker {
+      font-size: 1rem;
+      margin-bottom: 10px;
+    }
+    .input-wrapper input {
+      margin: 4px;
+      padding: 6px;
+      border-radius: 6px;
+      border: none;
+    }
+    .input-wrapper button {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: none;
+      background-color: #00ffa3;
+      color: #000;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
+  <div class="ticker">
+    🪙 SOL Price: <span id="solPrice">...</span> | ₿ BTC Price: <span id="btcPrice">...</span>
+  </div>
+
   <h1>📈 Memecoin PNL Calculator</h1>
+
+  <div class="input-wrapper">
+    <input id="coin" placeholder="Coin Name" />
+    <input id="investment" placeholder="Investment ($)" type="number" />
+    <input id="entry" placeholder="Entry MCAP" type="number" />
+    <input id="exit" placeholder="Exit MCAP" type="number" />
+    <button onclick="addTrade()">Add Trade</button>
+  </div>
 
   <div id="celebrate">🎉</div>
 
@@ -67,9 +98,7 @@
         <th>Action</th>
       </tr>
     </thead>
-    <tbody id="historyBody">
-      <!-- Trade rows will be injected here -->
-    </tbody>
+    <tbody id="historyBody"></tbody>
   </table>
 
   <canvas id="profitChart" height="100"></canvas>
@@ -78,6 +107,16 @@
     let trades = JSON.parse(localStorage.getItem("trades") || "[]");
     let chart;
     let sortDir = {};
+
+    const sound = new Howl({ src: ['https://assets.mixkit.co/sfx/preview/mixkit-small-group-cheer-and-applause-518.mp3'] });
+
+    async function updatePrices() {
+      const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=solana,bitcoin&vs_currencies=usd");
+      const json = await res.json();
+      document.getElementById("solPrice").innerText = `$${json.solana.usd}`;
+      document.getElementById("btcPrice").innerText = `$${json.bitcoin.usd}`;
+    }
+    updatePrices(); setInterval(updatePrices, 10000);
 
     function sortTable(colIndex) {
       const table = document.getElementById("historyBody");
@@ -95,6 +134,28 @@
       rows.forEach(row => table.appendChild(row));
     }
 
+    function addTrade() {
+      const coin = document.getElementById("coin").value;
+      const inv = parseFloat(document.getElementById("investment").value);
+      const entry = parseFloat(document.getElementById("entry").value);
+      const exit = parseFloat(document.getElementById("exit").value);
+      const date = new Date().toISOString();
+      if (!coin || isNaN(inv) || isNaN(entry) || isNaN(exit)) return;
+      const profit = ((exit - entry) / entry) * inv;
+      const percent = ((exit - entry) / entry) * 100;
+      const netProfit = profit - 0.40; // default fee
+      const obj = { coin, inv, entry, exit, profit: netProfit, percent, date };
+      trades.push(obj);
+      localStorage.setItem("trades", JSON.stringify(trades));
+      renderTrades(trades);
+      updateChart(trades);
+      if (percent >= 100) {
+        document.getElementById("celebrate").style.display = 'block';
+        setTimeout(() => document.getElementById("celebrate").style.display = 'none', 1500);
+        sound.play();
+      }
+    }
+
     function renderTrades(data) {
       const body = document.getElementById("historyBody");
       body.innerHTML = "";
@@ -110,9 +171,7 @@
           <td>${t.exit}</td>
           <td>$${t.profit.toFixed(2)}</td>
           <td>${t.percent.toFixed(2)}%</td>
-          <td>
-            <button onclick="deleteRow(${i})">Delete</button>
-          </td>
+          <td><button onclick="deleteRow(${i})">Delete</button></td>
         `;
         body.appendChild(row);
       });
