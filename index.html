@@ -107,6 +107,8 @@
   <table id="historyTable">
     <thead>
       <tr>
+        <th>#</th>
+        <th>Date</th>
         <th>Coin</th>
         <th>Investment ($)</th>
         <th>Entry MCAP</th>
@@ -127,8 +129,14 @@
     let totalProfit = 0;
     let totalPercent = 0;
     let tradeCount = 0;
+    let tradeNumber = 0;
+    let profitableTrades = 0;
+    let lossTrades = 0;
+    let editing = false;
 
     function calculateProfit() {
+      if (editing) return; // prevent multiple add
+
       const coinName = document.getElementById('coinName').value;
       const investment = parseFloat(document.getElementById('investment').value);
       const entryMcap = parseFloat(document.getElementById('entryMcap').value);
@@ -146,13 +154,21 @@
       totalProfit += profit;
       totalPercent += profitPercent;
       tradeCount++;
+      tradeNumber++;
+      if (profit >= 0) profitableTrades++;
+      else lossTrades++;
+
+      const now = new Date();
+      const dateStr = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
 
       document.getElementById('result').innerText = `Profit: $${profit.toFixed(2)} | Gain: ${profitPercent.toFixed(2)}%`;
-      document.getElementById('totals').innerText = `Net Total Profit: $${totalProfit.toFixed(2)} | Avg Gain: ${(totalPercent / tradeCount).toFixed(2)}%`;
+      document.getElementById('totals').innerText = `Total Trades: ${tradeCount} | Net Profit: $${totalProfit.toFixed(2)} | Avg Gain: ${(totalPercent / tradeCount).toFixed(2)}% | Wins: ${profitableTrades} | Losses: ${lossTrades}`;
 
       const tableBody = document.getElementById('historyTable').querySelector('tbody');
       const newRow = document.createElement('tr');
       newRow.innerHTML = `
+        <td>${tradeNumber}</td>
+        <td>${dateStr}</td>
         <td>${coinName}</td>
         <td>$${investment.toFixed(2)}</td>
         <td>${entryMcap}</td>
@@ -174,6 +190,7 @@
       document.getElementById('entryMcap').value = '';
       document.getElementById('exitMcap').value = '';
       document.getElementById('result').innerText = '';
+      editing = false;
     }
 
     function deleteRow(btn) {
@@ -184,11 +201,12 @@
     function editRow(btn) {
       const row = btn.closest('tr');
       const cells = row.querySelectorAll('td');
-      document.getElementById('coinName').value = cells[0].innerText;
-      document.getElementById('investment').value = parseFloat(cells[1].innerText.replace('$', ''));
-      document.getElementById('entryMcap').value = parseFloat(cells[2].innerText);
-      document.getElementById('exitMcap').value = parseFloat(cells[3].innerText);
+      document.getElementById('coinName').value = cells[2].innerText;
+      document.getElementById('investment').value = parseFloat(cells[3].innerText.replace('$', ''));
+      document.getElementById('entryMcap').value = parseFloat(cells[4].innerText);
+      document.getElementById('exitMcap').value = parseFloat(cells[5].innerText);
       row.remove();
+      editing = true;
     }
 
     function focusNext(e, nextId) {
