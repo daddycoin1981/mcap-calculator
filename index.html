@@ -9,6 +9,12 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     body {
+      
+ <div id="summaryStats" style="margin-top: 30px; font-size: 1.1rem;">
+    <p>✅ <strong>Total Profit:</strong> $<span id="totalProfit">0.00</span> | <span id="totalProfitPct">0.00%</span></p>
+    <p>❌ <strong>Total Loss:</strong> $<span id="totalLoss">0.00</span> | <span id="totalLossPct">0.00%</span></p>
+  </div>
+      
       background-color: #0b0f19;
       font-family: 'Arial Rounded MT Bold', sans-serif;
       color: #ffffff;
@@ -111,12 +117,7 @@
 
   <canvas id="profitChart" height="100"></canvas>
 
-  <div id="summaryStats" style="margin-top: 30px; font-size: 1.1rem;">
-    <p>✅ <strong>Total Profit:</strong> $<span id="totalProfit">0.00</span> | <span id="totalProfitPct">0.00%</span></p>
-    <p>❌ <strong>Total Loss:</strong> $<span id="totalLoss">0.00</span> | <span id="totalLossPct">0.00%</span></p>
-  </div>
-
-  <footer>
+   <footer>
     Developed by 10Solup | Contact: X/@10solup | YouTube/@10solup
   </footer>
 
