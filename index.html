@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MCAP Profit Calculator</title>
+  <title>Memecoin PNL Calculator</title>
   <style>
     body {
       background-color: #0b0f19;
@@ -83,18 +83,43 @@
     .edit-btn {
       background-color: #ffaa00;
     }
+    .loss-row {
+      background-color: #4a1d1d !important;
+    }
+    @keyframes popper {
+      0% { transform: scale(0.5); opacity: 0; }
+      50% { transform: scale(1.5); opacity: 1; }
+      100% { transform: scale(0.5); opacity: 0; }
+    }
+    #celebrate {
+      font-size: 3em;
+      animation: popper 1s ease;
+      display: none;
+      color: #ffd700;
+    }
+    #ticker {
+      background: #1a1a1a;
+      color: #00ffa3;
+      padding: 10px;
+      font-size: 1em;
+      overflow: hidden;
+      white-space: nowrap;
+      box-shadow: inset 0 0 10px #00ffa3;
+      margin-bottom: 20px;
+    }
   </style>
 </head>
 <body>
-  <h1>Memecoin MCAP Profit Calculator</h1>
+  <div id="ticker">Loading prices...</div>
+  <h1>📈 Memecoin PNL Calculator</h1>
 
-  <label for="coinName">Coin Name:</label>
+  <label for="coinName">💠 Coin Name:</label>
   <input type="text" id="coinName" placeholder="e.g. FLOKI" onkeydown="focusNext(event, 'investment')" />
-  <label for="investment">Investment ($):</label>
+  <label for="investment">💵 Investment ($):</label>
   <input type="number" id="investment" placeholder="e.g. 20" onkeydown="focusNext(event, 'entryMcap')" />
-  <label for="entryMcap">Entry MCAP ($):</label>
+  <label for="entryMcap">🟢 Entry MCAP ($):</label>
   <input type="number" id="entryMcap" placeholder="e.g. 15000" onkeydown="focusNext(event, 'exitMcap')" />
-  <label for="exitMcap">Exit MCAP ($):</label>
+  <label for="exitMcap">🔴 Exit MCAP ($):</label>
   <input type="number" id="exitMcap" placeholder="e.g. 22000" onkeydown="if(event.key==='Enter'){calculateProfit()}" />
   <br />
   <button onclick="calculateProfit()">Calculate</button>
@@ -102,6 +127,7 @@
 
   <div class="result" id="result"></div>
   <div class="totals" id="totals"></div>
+  <div id="celebrate">🎉</div>
 
   <h2>Trade History</h2>
   <table id="historyTable">
@@ -109,10 +135,10 @@
       <tr>
         <th>#</th>
         <th>Date</th>
-        <th>Coin</th>
-        <th>Investment ($)</th>
-        <th>Entry MCAP</th>
-        <th>Exit MCAP</th>
+        <th>💠 Coin</th>
+        <th>💵 Investment</th>
+        <th>🟢 Entry MCAP</th>
+        <th>🔴 Exit MCAP</th>
         <th>Profit ($)</th>
         <th>Profit (%)</th>
         <th>Action</th>
@@ -134,8 +160,20 @@
     let lossTrades = 0;
     let editing = false;
 
+    async function fetchPrices() {
+      try {
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana,bitcoin&vs_currencies=usd');
+        const data = await res.json();
+        document.getElementById('ticker').innerText = `📉 BTC: $${data.bitcoin.usd} | ⚡ SOL: $${data.solana.usd}`;
+      } catch (err) {
+        document.getElementById('ticker').innerText = 'Failed to load prices';
+      }
+    }
+    setInterval(fetchPrices, 5000);
+    fetchPrices();
+
     function calculateProfit() {
-      if (editing) return; // prevent multiple add
+      if (editing) return;
 
       const coinName = document.getElementById('coinName').value;
       const investment = parseFloat(document.getElementById('investment').value);
@@ -166,6 +204,7 @@
 
       const tableBody = document.getElementById('historyTable').querySelector('tbody');
       const newRow = document.createElement('tr');
+      if (profit < 0) newRow.classList.add('loss-row');
       newRow.innerHTML = `
         <td>${tradeNumber}</td>
         <td>${dateStr}</td>
@@ -180,7 +219,15 @@
           <button class='delete-btn' onclick='deleteRow(this)'>Delete</button>
         </td>
       `;
-      tableBody.appendChild(newRow);
+      tableBody.insertBefore(newRow, tableBody.firstChild);
+
+      if (profitPercent >= 100) {
+        const pop = document.getElementById("celebrate");
+        pop.style.display = "inline-block";
+        new Audio("https://www.soundjay.com/human/applause-01.mp3").play();
+        setTimeout(() => pop.style.display = "none", 1500);
+      }
+
       clearFields();
     }
 
