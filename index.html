@@ -8,72 +8,115 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
-    body {    
-  
-      background-color: #0b0f19;
-      font-family: 'Arial Rounded MT Bold', sans-serif;
-      color: #ffffff;
-      text-align: center;
-      padding: 30px;
-    }
-    table {
-      margin: 20px auto;
-      border-collapse: collapse;
-      width: 95%;
-      background-color: #121826;
-    }
-    th, td {
-      padding: 10px;
-      border: 1px solid #444;
-      cursor: pointer;
-    }
-    th {
-      background-color: #1f2a40;
-      color: #00ffa3;
-    }
-    .loss-row { background-color: #4a1d1d; }
-    canvas {
-      margin-top: 40px;
-      background-color: #1e1e2f;
-      padding: 10px;
-      border-radius: 10px;
-    }
-    #celebrate {
-      font-size: 3em;
-      color: #ffd700;
-      display: none;
-      animation: popper 1s ease-in-out;
-    }
-    @keyframes popper {
-      0% { transform: scale(0.5); opacity: 0; }
-      50% { transform: scale(1.5); opacity: 1; }
-      100% { transform: scale(0.5); opacity: 0; }
-    }
-    .ticker {
-      font-size: 1rem;
-      margin-bottom: 10px;
-    }
-    .input-wrapper input {
-      margin: 4px;
-      padding: 6px;
-      border-radius: 6px;
-      border: none;
-    }
-    .input-wrapper button {
-      padding: 6px 12px;
-      border-radius: 6px;
-      border: none;
-      background-color: #00ffa3;
-      color: #000;
-      font-weight: bold;
-      margin: 4px;
-    }
-    footer {
-      margin-top: 50px;
-      color: #888;
-      font-size: 0.9rem;
-    }
-  </style>
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+    font-family: 'Inter', sans-serif;
+    color: #f0f0f0;
+    padding: 40px;
+  }
+  h1 {
+    text-align: center;
+    font-size: 2.5em;
+    margin-bottom: 30px;
+    color: #00ffa3;
+    text-shadow: 0 0 10px rgba(0,255,163,0.5);
+  }
+  .ticker {
+    font-size: 1rem;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  .input-wrapper {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .input-wrapper input {
+    margin: 6px;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #00ffa3;
+    background-color: #1e3245;
+    color: #fff;
+  }
+  .input-wrapper input::placeholder {
+    color: #aaa;
+  }
+  .input-wrapper button {
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: none;
+    background-color: #00ffa3;
+    color: #000;
+    font-weight: bold;
+    margin: 6px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  .input-wrapper button:hover {
+    background-color: #00cc88;
+  }
+
+  table {
+    width: 100%;
+    margin: 0 auto 40px auto;
+    border-collapse: collapse;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0 15px rgba(0,0,0,0.4);
+  }
+  th {
+    background-color: #112b3c;
+    color: #00ffa3;
+    padding: 14px;
+    font-weight: 600;
+    border-bottom: 2px solid #00ffa3;
+    cursor: pointer;
+  }
+  td {
+    background-color: #1e3245;
+    padding: 12px;
+    text-align: center;
+    border-bottom: 1px solid #2a4c68;
+  }
+  .loss-row td {
+    background-color: #4a1d1d;
+    color: #ff4d4f;
+  }
+
+  canvas {
+    background-color: #121826;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 40px auto;
+    display: block;
+    max-width: 920px;
+  }
+
+  #celebrate {
+    font-size: 4em;
+    text-align: center;
+    display: none;
+    animation: popper 1s ease-in-out;
+  }
+  @keyframes popper {
+    0% { transform: scale(0.5); opacity: 0; }
+    50% { transform: scale(1.5); opacity: 1; }
+    100% { transform: scale(0.5); opacity: 0; }
+  }
+
+  footer {
+    margin-top: 60px;
+    color: #999;
+    font-size: 0.95rem;
+    text-align: center;
+  }
+</style>
+
 </head>
 <body>
   <div class="ticker">
