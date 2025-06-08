@@ -22,9 +22,14 @@
   h1 {
     text-align: center;
     font-size: 2.5em;
-    margin-bottom: 30px;
+    margin-bottom: 10px;
     color: #00ffa3;
     text-shadow: 0 0 10px rgba(0,255,163,0.5);
+  }
+  .summary-top {
+    text-align: center;
+    font-size: 1.2rem;
+    margin-bottom: 20px;
   }
   .ticker {
     font-size: 1rem;
@@ -60,7 +65,6 @@
   .input-wrapper button:hover {
     background-color: #00cc88;
   }
-
   table {
     width: 100%;
     margin: 0 auto 40px auto;
@@ -87,7 +91,6 @@
     background-color: #4a1d1d;
     color: #ff4d4f;
   }
-
   canvas {
     background-color: #121826;
     border-radius: 10px;
@@ -96,7 +99,6 @@
     display: block;
     max-width: 920px;
   }
-
   #celebrate {
     font-size: 4em;
     text-align: center;
@@ -108,7 +110,6 @@
     50% { transform: scale(1.5); opacity: 1; }
     100% { transform: scale(0.5); opacity: 0; }
   }
-
   footer {
     margin-top: 60px;
     color: #999;
@@ -116,7 +117,6 @@
     text-align: center;
   }
 </style>
-
 </head>
 <body>
   <div class="ticker">
@@ -125,12 +125,19 @@
 
   <h1>📈 Memecoin PNL Calculator</h1>
 
+  <div class="summary-top">
+    ✅ <strong>Total Profit:</strong> $<span id="totalProfit">0.00</span> | <span id="totalProfitPct">0.00%</span> &nbsp;&nbsp;
+    ❌ <strong>Total Loss:</strong> $<span id="totalLoss">0.00</span> | <span id="totalLossPct">0.00%</span> &nbsp;&nbsp;
+    🔄 <strong>Total Trades:</strong> <span id="totalTrades">0</span>
+  </div>
+
   <div class="input-wrapper">
     <input id="coin" placeholder="💠 Coin Name" />
     <input id="investment" placeholder="💵 Investment ($)" type="number" />
     <input id="entry" placeholder="🟢 Entry MCAP" type="number" />
     <input id="exit" placeholder="🔴 Exit MCAP" type="number" />
     <button onclick="addTrade()">Add Trade</button>
+    <button onclick="clearFields()">Clear Fields</button>
     <button onclick="exportToExcel()">Export to Excel</button>
   </div>
 
@@ -154,11 +161,8 @@
   </table>
 
   <canvas id="profitChart" height="100"></canvas>
- <div id="summaryStats" style="margin-top: 30px; font-size: 1.1rem;">
-    <p>✅ <strong>Total Profit:</strong> $<span id="totalProfit">0.00</span> | <span id="totalProfitPct">0.00%</span></p>
-    <p>❌ <strong>Total Loss:</strong> $<span id="totalLoss">0.00</span> | <span id="totalLossPct">0.00%</span></p>
-  </div>
-   <footer>
+
+  <footer>
     Developed by 10Solup | Contact: X/@10solup | YouTube/@10solup
   </footer>
 
@@ -177,153 +181,32 @@
     }
     updatePrices(); setInterval(updatePrices, 10000);
 
-    function sortTable(colIndex) {
-      const table = document.getElementById("historyBody");
-      const rows = Array.from(table.rows);
-      const dir = sortDir[colIndex] === 'asc' ? 'desc' : 'asc';
-      sortDir[colIndex] = dir;
-      rows.sort((a, b) => {
-        const valA = a.cells[colIndex].innerText.replace(/[^\d.-]/g, '');
-        const valB = b.cells[colIndex].innerText.replace(/[^\d.-]/g, '');
-        const isNum = !isNaN(valA) && !isNaN(valB);
-        const result = isNum ? valA - valB : a.cells[colIndex].innerText.localeCompare(b.cells[colIndex].innerText);
-        return dir === 'asc' ? result : -result;
-      });
-      table.innerHTML = '';
-      rows.forEach(row => table.appendChild(row));
-    }
-
-    function addTrade() {
-      const coin = document.getElementById("coin").value;
-      const inv = parseFloat(document.getElementById("investment").value);
-      const entry = parseFloat(document.getElementById("entry").value);
-      const exit = parseFloat(document.getElementById("exit").value);
-      const date = new Date().toISOString();
-      if (!coin || isNaN(inv) || isNaN(entry) || isNaN(exit)) return;
-      const profit = ((exit - entry) / entry) * inv;
-      const percent = ((exit - entry) / entry) * 100;
-      const netProfit = profit - 0.40; // default fee
-      const obj = { coin, inv, entry, exit, profit: netProfit, percent, date };
-      trades.unshift(obj);
-      localStorage.setItem("trades", JSON.stringify(trades));
-      renderTrades(trades);
-      updateChart(trades);
-      updateSummaryStats(trades);
-      if (percent >= 100) {
-        document.getElementById("celebrate").style.display = 'block';
-        setTimeout(() => document.getElementById("celebrate").style.display = 'none', 1500);
-        sound.play();
-      }
-    }
-
-    function renderTrades(data) {
-      const body = document.getElementById("historyBody");
-      body.innerHTML = "";
-      data.forEach((t, i) => {
-        const row = document.createElement("tr");
-        if (t.profit < 0) row.className = "loss-row";
-        row.innerHTML = `
-          <td>${i + 1}</td>
-          <td>${new Date(t.date).toLocaleString()}</td>
-          <td>${t.coin}</td>
-          <td>$${t.inv.toFixed(2)}</td>
-          <td>${t.entry}</td>
-          <td>${t.exit}</td>
-          <td>$${t.profit.toFixed(2)}</td>
-          <td>${t.percent.toFixed(2)}%</td>
-          <td>
-            <button onclick="editTrade(${i})">Edit</button>
-            <button onclick="deleteRow(${i})">Delete</button>
-          </td>
-        `;
-        body.appendChild(row);
-      });
-      updateSummaryStats(data);
-    }
-
-    function deleteRow(index) {
-      trades.splice(index, 1);
-      localStorage.setItem("trades", JSON.stringify(trades));
-      renderTrades(trades);
-      updateChart(trades);
-      updateSummaryStats(trades);
-    }
-
-    function editTrade(index) {
-      const t = trades[index];
-      document.getElementById("coin").value = t.coin;
-      document.getElementById("investment").value = t.inv;
-      document.getElementById("entry").value = t.entry;
-      document.getElementById("exit").value = t.exit;
-      deleteRow(index);
-    }
-
-    function updateChart(data) {
-      const ctx = document.getElementById("profitChart").getContext("2d");
-      const labels = data.map((_, i) => `T${data.length - i}`);
-      const profits = data.map(t => t.profit).reverse();
-      const tooltips = data.map(t => `$${t.profit.toFixed(2)} (${t.percent.toFixed(1)}%)`).reverse();
-      if (chart) chart.destroy();
-      chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [{
-            label: 'Profit ($)',
-            data: profits,
-            borderColor: '#00ffa3',
-            backgroundColor: 'rgba(0,255,163,0.1)',
-            tension: 0.3,
-            fill: true,
-            pointBackgroundColor: profits.map(p => p >= 0 ? '#00ffa3' : '#ff4d4f')
-          }]
-        },
-        options: {
-          plugins: {
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  const idx = context.dataIndex;
-                  return tooltips[idx];
-                }
-              }
-            }
-          },
-          scales: {
-            y: {
-              title: { display: true, text: 'Profit in $' }
-            },
-            x: {
-              title: { display: true, text: 'Trade Count (T1 = Latest)' }
+    document.addEventListener('DOMContentLoaded', () => {
+      const inputs = ['coin', 'investment', 'entry', 'exit'];
+      inputs.forEach((id, idx) => {
+        document.getElementById(id).addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            if (idx < inputs.length - 1) {
+              document.getElementById(inputs[idx + 1]).focus();
+            } else {
+              addTrade();
+              document.getElementById('coin').focus();
             }
           }
-        }
+        });
       });
+    });
+
+    function clearFields() {
+      document.getElementById("coin").value = "";
+      document.getElementById("investment").value = "";
+      document.getElementById("entry").value = "";
+      document.getElementById("exit").value = "";
+      document.getElementById("coin").focus();
     }
 
-    function updateSummaryStats(data) {
-      const totalProfitTrades = data.filter(t => t.profit >= 0);
-      const totalLossTrades = data.filter(t => t.profit < 0);
-      const profitSum = totalProfitTrades.reduce((sum, t) => sum + t.profit, 0);
-      const lossSum = totalLossTrades.reduce((sum, t) => sum + t.profit, 0);
-      const profitPct = totalProfitTrades.reduce((sum, t) => sum + t.percent, 0);
-      const lossPct = totalLossTrades.reduce((sum, t) => sum + t.percent, 0);
-      document.getElementById("totalProfit").innerText = profitSum.toFixed(2);
-      document.getElementById("totalLoss").innerText = Math.abs(lossSum).toFixed(2);
-      document.getElementById("totalProfitPct").innerText = profitPct.toFixed(2) + "%";
-      document.getElementById("totalLossPct").innerText = Math.abs(lossPct).toFixed(2) + "%";
-    }
-
-    function exportToExcel() {
-      const ws = XLSX.utils.json_to_sheet(trades);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Trades");
-      XLSX.writeFile(wb, "Memecoin_PNL_Calculator.xlsx");
-    }
-
-    renderTrades(trades);
-    updateChart(trades);
-    updateSummaryStats(trades);
+    // KEEP REST OF YOUR SCRIPT UNCHANGED INCLUDING addTrade, renderTrades, etc.
   </script>
 </body>
 </html>
